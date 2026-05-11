@@ -137,12 +137,56 @@ router.delete('/cagnottes/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// PATCH /api/admin/cagnottes/:id/baseline — Modifier le montant récolté de base
+router.patch('/cagnottes/:id/baseline', (req, res) => {
+  const db = req.app.locals.db;
+  const { baseline_collected, baseline_donors } = req.body;
+
+  const fields = [];
+  const values = [];
+
+  if (baseline_collected !== undefined) {
+    fields.push('baseline_collected_cents = ?');
+    values.push(Math.round(parseFloat(baseline_collected) * 100));
+  }
+  if (baseline_donors !== undefined) {
+    fields.push('baseline_donors = ?');
+    values.push(parseInt(baseline_donors));
+  }
+
+  if (fields.length === 0) return res.status(400).json({ error: 'Aucun champ' });
+
+  values.push(req.params.id);
+  db.prepare(`UPDATE cagnottes SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  res.json({ success: true });
+});
+
 // GET /api/admin/cagnottes/:id/dons — Dons d'une cagnotte
 router.get('/cagnottes/:id/dons', (req, res) => {
   const db = req.app.locals.db;
   const dons = db.prepare(`
     SELECT * FROM dons WHERE cagnotte_id = ? ORDER BY created_at DESC
   `).all(req.params.id);
+  res.json(dons);
+});
+
+// DELETE /api/admin/dons/:id — Supprimer un don (commentaire)
+router.delete('/dons/:id', (req, res) => {
+  const db = req.app.locals.db;
+  db.prepare('DELETE FROM dons WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// GET /api/admin/dons — Tous les dons (pour la section commentaires)
+router.get('/dons', (req, res) => {
+  const db = req.app.locals.db;
+  const dons = db.prepare(`
+    SELECT d.*, c.title AS cagnotte_title
+    FROM dons d
+    JOIN cagnottes c ON c.id = d.cagnotte_id
+    WHERE d.status = 'confirmed' AND d.message != ''
+    ORDER BY d.created_at DESC
+  `).all();
   res.json(dons);
 });
 

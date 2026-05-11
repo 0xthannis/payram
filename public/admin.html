@@ -7,148 +7,197 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔑</text></svg>">
+  <style>
+    .tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; cursor: pointer; }
+    .tab-btn.active { background: #16a34a; color: white; }
+    .tab-btn:not(.active) { background: #f3f4f6; color: #6b7280; }
+    .tab-btn:not(.active):hover { background: #e5e7eb; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+    .admin-card { background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; transition: box-shadow 0.2s; }
+    .admin-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .admin-input { width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #e5e7eb; border-radius: 0.5rem; outline: none; font-size: 0.875rem; transition: border-color 0.2s; }
+    .admin-input:focus { border-color: #16a34a; }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 0.375rem; transition: all 0.2s; cursor: pointer; }
+    .comment-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 0.5rem; }
+    .comment-row:hover { background: #f9fafb; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
 
-  <!-- Écran de login -->
-  <div id="login-screen" class="admin-login px-4">
-    <div class="bg-white rounded-2xl shadow-sm p-8">
-      <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center">🔑 Back-office</h1>
-      <p class="text-gray-500 text-center mb-6 text-sm">Entrez le mot de passe admin</p>
+  <!-- LOGIN -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+      <h1 class="text-2xl font-bold text-gray-800 mb-1 text-center">Ma Sadaqa</h1>
+      <p class="text-gray-400 text-center mb-6 text-sm">Administration</p>
       <input type="password" id="admin-password" placeholder="Mot de passe"
-        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition mb-4">
-      <button onclick="adminLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition">
+        class="admin-input mb-4 !text-base !py-3">
+      <button onclick="adminLogin()" class="w-full bg-gray-900 text-white font-semibold py-3 rounded-xl hover:bg-gray-800 transition">
         Connexion
       </button>
       <p id="login-error" class="hidden text-red-500 text-sm mt-3 text-center"></p>
     </div>
   </div>
 
-  <!-- Dashboard (caché par défaut) -->
+  <!-- DASHBOARD -->
   <div id="admin-dashboard" class="hidden">
-    <!-- Header admin -->
-    <header class="bg-white border-b border-gray-200 px-4 py-4">
-      <div class="max-w-6xl mx-auto flex items-center justify-between">
-        <h1 class="text-xl font-bold text-gray-800">🔑 Ma Sadaqa — Administration</h1>
+    <!-- Sidebar + Content -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <h1 class="text-lg font-bold text-gray-800">Ma Sadaqa — Admin</h1>
         <div class="flex items-center gap-4">
-          <a href="/" class="text-sm text-blue-600 hover:underline">← Voir le site</a>
-          <button onclick="adminLogout()" class="text-sm text-gray-500 hover:text-red-500 transition">Déconnexion</button>
+          <a href="/" target="_blank" class="text-sm text-green-600 hover:underline">Voir le site</a>
+          <button onclick="adminLogout()" class="text-sm text-gray-400 hover:text-red-500">Deconnexion</button>
         </div>
       </div>
     </header>
 
-    <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
 
-      <!-- Stats cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <!-- Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-xl p-5 shadow-sm">
-          <p class="text-sm text-gray-500 mb-1">Total collecté</p>
-          <p id="stat-collected" class="text-2xl font-bold text-green-600">—</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Total collecte</p>
+          <p id="stat-collected" class="text-2xl font-bold text-green-600">--</p>
         </div>
         <div class="bg-white rounded-xl p-5 shadow-sm">
-          <p class="text-sm text-gray-500 mb-1">Dons confirmés</p>
-          <p id="stat-dons" class="text-2xl font-bold text-gray-800">—</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Dons confirmes</p>
+          <p id="stat-dons" class="text-2xl font-bold text-gray-800">--</p>
         </div>
         <div class="bg-white rounded-xl p-5 shadow-sm">
-          <p class="text-sm text-gray-500 mb-1">Cagnottes actives</p>
-          <p id="stat-cagnottes" class="text-2xl font-bold text-gray-800">—</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Cagnottes</p>
+          <p id="stat-cagnottes" class="text-2xl font-bold text-gray-800">--</p>
         </div>
         <div class="bg-white rounded-xl p-5 shadow-sm">
-          <p class="text-sm text-gray-500 mb-1">Taux de conversion</p>
-          <p id="stat-conversion" class="text-2xl font-bold text-blue-600">—</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Conversion</p>
+          <p id="stat-conversion" class="text-2xl font-bold text-blue-600">--</p>
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-gray-800">Cagnottes</h2>
-        <button onclick="showCreateForm()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition">
-          + Nouvelle cagnotte
-        </button>
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button class="tab-btn active" onclick="switchTab('cagnottes')">Cagnottes</button>
+        <button class="tab-btn" onclick="switchTab('comments')">Commentaires</button>
       </div>
 
-      <!-- Formulaire de création (caché) -->
-      <div id="create-form" class="hidden bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="font-semibold text-gray-800 mb-4">Créer une cagnotte</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <input id="new-title" type="text" placeholder="Titre" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500">
-          <input id="new-goal" type="number" placeholder="Objectif (€)" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500">
-          <input id="new-image" type="url" placeholder="URL image (optionnel)" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500 sm:col-span-2">
-        </div>
-        <textarea id="new-story" rows="4" placeholder="Histoire de la cagnotte..."
-          class="w-full px-4 py-2 border rounded-lg outline-none focus:border-green-500 mb-4 resize-none"></textarea>
-        <div class="flex gap-3">
-          <button onclick="createCagnotte()" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
-            Créer
-          </button>
-          <button onclick="hideCreateForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
-            Annuler
-          </button>
-        </div>
-      </div>
-
-      <!-- Liste des cagnottes -->
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Cagnotte</th>
-              <th>Collecté</th>
-              <th>Objectif</th>
-              <th>Donateurs</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="cagnottes-tbody">
-            <tr><td colspan="6" class="text-center py-8 text-gray-400">Chargement...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Dons d'une cagnotte (caché par défaut) -->
-      <div id="dons-panel" class="hidden mt-8">
+      <!-- TAB: CAGNOTTES -->
+      <div id="tab-cagnottes">
         <div class="flex items-center justify-between mb-4">
-          <h2 id="dons-panel-title" class="text-xl font-bold text-gray-800"></h2>
-          <button onclick="hideDonsPanel()" class="text-sm text-gray-500 hover:text-gray-700">✕ Fermer</button>
+          <h2 class="text-lg font-bold text-gray-700">Mes cagnottes</h2>
+          <button onclick="showCreateModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
+            + Nouvelle cagnotte
+          </button>
         </div>
-        <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Prénom</th>
-                <th>Montant</th>
-                <th>Message</th>
-                <th>Statut</th>
-                <th>PayRam ID</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody id="dons-tbody"></tbody>
-          </table>
+
+        <div id="cagnottes-grid" class="card-grid">
+          <p class="text-gray-400 text-center col-span-full py-8">Chargement...</p>
+        </div>
+      </div>
+
+      <!-- TAB: COMMENTAIRES -->
+      <div id="tab-comments" class="hidden">
+        <h2 class="text-lg font-bold text-gray-700 mb-4">Commentaires des donateurs</h2>
+        <div id="comments-list" class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+          <p class="text-gray-400 text-center py-8">Chargement...</p>
         </div>
       </div>
 
     </div>
   </div>
 
+  <!-- MODAL EDIT CAGNOTTE -->
+  <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative fade-in max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      <h2 id="edit-modal-title" class="text-xl font-bold text-gray-800 mb-4">Modifier la cagnotte</h2>
+
+      <input type="hidden" id="edit-id">
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Titre</label>
+          <input id="edit-title" class="admin-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">URL de l'image</label>
+          <input id="edit-image" class="admin-input" placeholder="https://...">
+          <img id="edit-image-preview" class="mt-2 rounded-lg max-h-32 object-cover hidden" alt="">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Description / Histoire</label>
+          <textarea id="edit-story" rows="4" class="admin-input resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Objectif (en euros)</label>
+            <input id="edit-goal" type="number" class="admin-input">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Statut</label>
+            <select id="edit-active" class="admin-input">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="my-2">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Montant recolte (ajustable)</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Montant de base (euros)</label>
+            <input id="edit-baseline" type="number" class="admin-input" step="1">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Donateurs de base</label>
+            <input id="edit-baseline-donors" type="number" class="admin-input" step="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button onclick="saveEdit()" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
+          Sauvegarder
+        </button>
+        <button onclick="deleteCagnotte(document.getElementById('edit-id').value)" class="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-semibold hover:bg-red-100 transition">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREATE CAGNOTTE -->
+  <div id="create-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative fade-in">
+      <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Nouvelle cagnotte</h2>
+      <div class="space-y-4">
+        <input id="new-title" class="admin-input" placeholder="Titre de la cagnotte">
+        <input id="new-image" class="admin-input" placeholder="URL image (optionnel)">
+        <textarea id="new-story" rows="4" class="admin-input resize-none" placeholder="Histoire / description..."></textarea>
+        <input id="new-goal" type="number" class="admin-input" placeholder="Objectif en euros">
+      </div>
+      <button onclick="createCagnotte()" class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition mt-4">
+        Creer la cagnotte
+      </button>
+    </div>
+  </div>
+
   <script>
     let adminPwd = '';
+    let cagnottesData = [];
 
     function formatEuros(cents) {
       return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(cents / 100);
     }
 
-    // LOGIN
+    // === AUTH ===
     function adminLogin() {
       adminPwd = document.getElementById('admin-password').value;
       fetchDashboard();
     }
-
-    document.getElementById('admin-password').addEventListener('keydown', e => {
-      if (e.key === 'Enter') adminLogin();
-    });
-
+    document.getElementById('admin-password').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
     function adminLogout() {
       adminPwd = '';
       document.getElementById('admin-dashboard').classList.add('hidden');
@@ -156,7 +205,6 @@
       document.getElementById('admin-password').value = '';
     }
 
-    // API helper
     async function adminFetch(url, options = {}) {
       options.headers = { ...options.headers, 'X-Admin-Password': adminPwd, 'Content-Type': 'application/json' };
       const res = await fetch(url, options);
@@ -168,97 +216,180 @@
       return res.json();
     }
 
-    // DASHBOARD
+    // === TABS ===
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', (i === 0 && tab === 'cagnottes') || (i === 1 && tab === 'comments'));
+      });
+      document.getElementById('tab-cagnottes').classList.toggle('hidden', tab !== 'cagnottes');
+      document.getElementById('tab-comments').classList.toggle('hidden', tab !== 'comments');
+      if (tab === 'comments') loadComments();
+    }
+
+    // === DASHBOARD ===
     async function fetchDashboard() {
       try {
         const stats = await adminFetch('/api/admin/dashboard');
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('admin-dashboard').classList.remove('hidden');
         document.getElementById('login-error').classList.add('hidden');
-
         document.getElementById('stat-collected').textContent = formatEuros(stats.total_collected_cents);
         document.getElementById('stat-dons').textContent = stats.total_dons;
         document.getElementById('stat-cagnottes').textContent = stats.total_cagnottes;
         document.getElementById('stat-conversion').textContent = stats.conversion_rate + '%';
-
         loadCagnottes();
-      } catch (e) { /* login error handled above */ }
+      } catch (e) {}
     }
 
-    // CAGNOTTES LIST
+    // === CAGNOTTES GRID ===
     async function loadCagnottes() {
-      const data = await adminFetch('/api/admin/cagnottes');
-      const tbody = document.getElementById('cagnottes-tbody');
-      tbody.innerHTML = data.map(c => `
-        <tr>
-          <td class="font-medium">${c.title}</td>
-          <td class="font-semibold text-green-600">${formatEuros(c.collected_cents)}</td>
-          <td>${formatEuros(c.goal_cents)}</td>
-          <td>${c.donors_count}</td>
-          <td>${c.is_active ? '<span class="status-badge status-confirmed">Active</span>' : '<span class="status-badge status-failed">Inactive</span>'}</td>
-          <td class="space-x-2">
-            <button onclick="viewDons(${c.id}, '${c.title.replace(/'/g, "\\'")}')" class="text-blue-600 hover:underline text-sm">Dons</button>
-            <button onclick="toggleActive(${c.id}, ${c.is_active})" class="text-yellow-600 hover:underline text-sm">${c.is_active ? 'Désactiver' : 'Activer'}</button>
-            <button onclick="deleteCagnotte(${c.id})" class="text-red-600 hover:underline text-sm">Supprimer</button>
-          </td>
-        </tr>
+      cagnottesData = await adminFetch('/api/admin/cagnottes');
+      const grid = document.getElementById('cagnottes-grid');
+      grid.innerHTML = cagnottesData.map(c => `
+        <div class="admin-card fade-in cursor-pointer" onclick="openEditModal(${c.id})">
+          <div class="h-40 bg-gray-100 overflow-hidden">
+            <img src="${c.image_url}" alt="${c.title}" class="w-full h-full object-cover">
+          </div>
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-bold text-gray-800 text-sm leading-tight">${c.title}</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${c.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                ${c.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="font-bold text-green-600">${formatEuros(c.collected_cents)}</span>
+              <span class="text-gray-400">obj. ${formatEuros(c.goal_cents)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min(100, Math.round(c.collected_cents / c.goal_cents * 100))}%"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">${c.donors_count} donateur${c.donors_count > 1 ? 's' : ''} · cliquer pour modifier</p>
+          </div>
+        </div>
       `).join('');
     }
 
-    // CREATE
-    function showCreateForm() { document.getElementById('create-form').classList.remove('hidden'); }
-    function hideCreateForm() { document.getElementById('create-form').classList.add('hidden'); }
+    // === EDIT MODAL ===
+    function openEditModal(id) {
+      const c = cagnottesData.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('edit-id').value = c.id;
+      document.getElementById('edit-title').value = c.title;
+      document.getElementById('edit-image').value = c.image_url;
+      document.getElementById('edit-story').value = c.story;
+      document.getElementById('edit-goal').value = (c.goal_cents / 100).toFixed(0);
+      document.getElementById('edit-active').value = c.is_active ? '1' : '0';
+      document.getElementById('edit-baseline').value = (c.baseline_collected_cents / 100).toFixed(0);
+      document.getElementById('edit-baseline-donors').value = c.baseline_donors;
+      document.getElementById('edit-modal-title').textContent = 'Modifier: ' + c.title;
 
-    async function createCagnotte() {
-      const data = {
-        title: document.getElementById('new-title').value,
-        story: document.getElementById('new-story').value,
-        image_url: document.getElementById('new-image').value,
-        goal: parseFloat(document.getElementById('new-goal').value)
-      };
-      await adminFetch('/api/admin/cagnottes', { method: 'POST', body: JSON.stringify(data) });
-      hideCreateForm();
-      loadCagnottes();
-      fetchDashboard();
+      const preview = document.getElementById('edit-image-preview');
+      preview.src = c.image_url;
+      preview.classList.remove('hidden');
+
+      document.getElementById('edit-modal').classList.remove('hidden');
     }
 
-    // TOGGLE ACTIVE
-    async function toggleActive(id, current) {
+    document.getElementById('edit-image').addEventListener('input', function() {
+      const preview = document.getElementById('edit-image-preview');
+      if (this.value) { preview.src = this.value; preview.classList.remove('hidden'); }
+      else { preview.classList.add('hidden'); }
+    });
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    async function saveEdit() {
+      const id = document.getElementById('edit-id').value;
+      // Save cagnotte fields
       await adminFetch(`/api/admin/cagnottes/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ is_active: !current })
+        body: JSON.stringify({
+          title: document.getElementById('edit-title').value,
+          story: document.getElementById('edit-story').value,
+          image_url: document.getElementById('edit-image').value,
+          goal: parseFloat(document.getElementById('edit-goal').value),
+          is_active: document.getElementById('edit-active').value === '1'
+        })
       });
-      loadCagnottes();
-    }
-
-    // DELETE
-    async function deleteCagnotte(id) {
-      if (!confirm('Supprimer cette cagnotte et tous ses dons ? Cette action est irréversible.')) return;
-      await adminFetch(`/api/admin/cagnottes/${id}`, { method: 'DELETE' });
+      // Save baseline
+      await adminFetch(`/api/admin/cagnottes/${id}/baseline`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          baseline_collected: parseFloat(document.getElementById('edit-baseline').value) || 0,
+          baseline_donors: parseInt(document.getElementById('edit-baseline-donors').value) || 0
+        })
+      });
+      closeEditModal();
       loadCagnottes();
       fetchDashboard();
     }
 
-    // VIEW DONS
-    async function viewDons(id, title) {
-      const dons = await adminFetch(`/api/admin/cagnottes/${id}/dons`);
-      document.getElementById('dons-panel-title').textContent = `Dons — ${title}`;
-      const tbody = document.getElementById('dons-tbody');
-      tbody.innerHTML = dons.length ? dons.map(d => `
-        <tr>
-          <td>${d.prenom}</td>
-          <td class="font-semibold">${formatEuros(d.amount_cents)}</td>
-          <td class="text-sm text-gray-500 max-w-[200px] truncate">${d.message || '—'}</td>
-          <td><span class="status-badge status-${d.status}">${d.status}</span></td>
-          <td class="text-xs text-gray-400 font-mono">${d.payram_invoice_id || '—'}</td>
-          <td class="text-sm text-gray-500">${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
-        </tr>
-      `).join('') : '<tr><td colspan="6" class="text-center py-4 text-gray-400">Aucun don</td></tr>';
-      document.getElementById('dons-panel').classList.remove('hidden');
-      document.getElementById('dons-panel').scrollIntoView({ behavior: 'smooth' });
+    // === CREATE MODAL ===
+    function showCreateModal() { document.getElementById('create-modal').classList.remove('hidden'); }
+    function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
+
+    async function createCagnotte() {
+      await adminFetch('/api/admin/cagnottes', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: document.getElementById('new-title').value,
+          story: document.getElementById('new-story').value,
+          image_url: document.getElementById('new-image').value,
+          goal: parseFloat(document.getElementById('new-goal').value)
+        })
+      });
+      closeCreateModal();
+      document.getElementById('new-title').value = '';
+      document.getElementById('new-story').value = '';
+      document.getElementById('new-image').value = '';
+      document.getElementById('new-goal').value = '';
+      loadCagnottes();
+      fetchDashboard();
     }
 
-    function hideDonsPanel() { document.getElementById('dons-panel').classList.add('hidden'); }
+    // === DELETE ===
+    async function deleteCagnotte(id) {
+      if (!confirm('Supprimer cette cagnotte et tous ses dons ?')) return;
+      await adminFetch(`/api/admin/cagnottes/${id}`, { method: 'DELETE' });
+      closeEditModal();
+      loadCagnottes();
+      fetchDashboard();
+    }
+
+    // === COMMENTS ===
+    async function loadComments() {
+      const dons = await adminFetch('/api/admin/dons');
+      const list = document.getElementById('comments-list');
+      if (!dons.length) {
+        list.innerHTML = '<p class="text-gray-400 text-center py-8">Aucun commentaire</p>';
+        return;
+      }
+      list.innerHTML = dons.map(d => `
+        <div class="comment-row fade-in" id="comment-${d.id}">
+          <img src="${d.avatar_url || 'https://i.pravatar.cc/40?u=' + d.id}" class="w-10 h-10 rounded-full flex-shrink-0" alt="">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-gray-800 text-sm">${d.prenom}</span>
+              <span class="text-xs text-gray-400">${new Date(d.created_at).toLocaleDateString('fr-FR')} · ${d.cagnotte_title}</span>
+            </div>
+            <p class="text-sm text-gray-600 mt-0.5">${d.message}</p>
+            <div class="flex items-center gap-3 mt-1">
+              <span class="text-xs font-semibold text-green-600">${formatEuros(d.amount_cents)}</span>
+              <button onclick="deleteComment(${d.id})" class="text-xs text-red-400 hover:text-red-600 transition">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function deleteComment(id) {
+      if (!confirm('Supprimer ce commentaire ?')) return;
+      await adminFetch(`/api/admin/dons/${id}`, { method: 'DELETE' });
+      const el = document.getElementById('comment-' + id);
+      if (el) el.remove();
+      fetchDashboard();
+    }
   </script>
 </body>
 </html>

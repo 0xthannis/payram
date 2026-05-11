@@ -43,6 +43,9 @@ app.use('/api/dons', require('./routes/dons'));
 app.use('/webhook', require('./routes/webhook'));
 app.use('/api/admin', require('./routes/admin'));
 
+// Redirect /admin → /admin.html
+app.get('/admin', (req, res) => res.redirect('/admin.html'));
+
 // ============================================
 // Lancement du serveur
 // ============================================
