@@ -29,61 +29,51 @@
         <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center">Donner ma sadaqa</h1>
         <p class="text-gray-500 text-center mb-8">« La sadaqa n’a jamais diminué une richesse » 🤲</p>
 
-        <!-- Prénom -->
-        <div class="mb-6">
-          <label for="prenom" class="block text-sm font-medium text-gray-700 mb-2">Ton prénom</label>
-          <input type="text" id="prenom"
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 outline-none transition text-gray-800"
-            placeholder="Ex : Marie">
-        </div>
+        <form id="don-form">
+          <!-- Prénom -->
+          <div class="mb-6">
+            <label for="prenom" class="block text-sm font-medium text-gray-700 mb-2">Ton prénom</label>
+            <input type="text" id="prenom" name="prenom" required
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 outline-none transition text-gray-800"
+              placeholder="Ex : Fatima">
+          </div>
 
-        <!-- Message -->
-        <div class="mb-6">
-          <label for="message" class="block text-sm font-medium text-gray-700 mb-2">
-            Un petit mot <span class="text-gray-400">(optionnel)</span>
-          </label>
-          <textarea id="message" rows="2"
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 outline-none transition text-gray-800 resize-none"
-            placeholder="Qu'Allah te facilite 🤲"></textarea>
-        </div>
+          <!-- Montant -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Choisis ton montant</label>
+            <div class="flex flex-wrap gap-3 mb-4">
+              <button type="button" class="amount-btn" data-amount="5">5 $</button>
+              <button type="button" class="amount-btn" data-amount="10">10 $</button>
+              <button type="button" class="amount-btn selected" data-amount="25">25 $</button>
+              <button type="button" class="amount-btn" data-amount="50">50 $</button>
+              <button type="button" class="amount-btn" data-amount="100">100 $</button>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-gray-500">ou montant libre :</span>
+              <input type="number" id="custom-amount" min="1" step="1"
+                class="amount-input" placeholder="$">
+            </div>
+            <input type="hidden" id="amount-value" value="25">
+          </div>
 
-        <!-- Erreur -->
-        <div id="don-error" class="hidden bg-red-50 text-red-600 rounded-xl px-4 py-3 mb-4 text-sm font-medium"></div>
+          <!-- Message -->
+          <div class="mb-8">
+            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">
+              Un petit mot <span class="text-gray-400">(optionnel)</span>
+            </label>
+            <textarea id="message" name="message" rows="3"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-0 outline-none transition text-gray-800 resize-none"
+              placeholder="Qu'Allah te facilite 🤲"></textarea>
+          </div>
 
-        <!-- Widget PayRam -->
-        <div id="payram-widget-container" class="mb-4"></div>
+          <!-- Erreur -->
+          <div id="don-error" class="hidden bg-red-50 text-red-600 rounded-xl px-4 py-3 mb-4 text-sm font-medium"></div>
 
-        <script>
-          // Sauvegarder les infos du donateur avant le paiement PayRam
-          function saveDonorInfo() {
-            const params = new URLSearchParams(window.location.search);
-            const cagnotteId = params.get('id') || '1';
-            const prenom = document.getElementById('prenom').value.trim() || 'Anonyme';
-            const message = document.getElementById('message').value.trim();
-            localStorage.setItem('masadaqa_donor', JSON.stringify({ cagnotteId, prenom, message }));
-          }
-
-          // Observer les clics sur le widget PayRam
-          document.addEventListener('click', function(e) {
-            if (e.target.closest('#payram-widget-container')) {
-              saveDonorInfo();
-            }
-          });
-
-          // Charger le widget PayRam dynamiquement
-          (function() {
-            const script = document.createElement('script');
-            script.src = 'https://payram.com/widget/payram-add-credit-v1.js';
-            script.setAttribute('data-payram-url', 'http://157.230.103.126:8080');
-            script.setAttribute('data-api-key', '1e59b79836374e84cca432052aff7bba');
-            script.setAttribute('data-amounts', '5,10,25,50');
-            script.setAttribute('data-theme', 'light');
-            script.setAttribute('data-brand-label', 'Ma Sadaqa 🤲');
-            script.setAttribute('data-currency', 'USDC');
-            script.setAttribute('data-chain', 'base');
-            document.getElementById('payram-widget-container').appendChild(script);
-          })();
-        </script>
+          <!-- Bouton submit -->
+          <button type="submit" id="submit-don" class="btn-primary w-full text-lg">
+            🤲 Je donne ma sadaqa
+          </button>
+        </form>
       </div>
 
       <!-- Trust badges -->
