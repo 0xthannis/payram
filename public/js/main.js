@@ -134,7 +134,7 @@ async function loadCagnottePage() {
     if (c.dons && c.dons.length > 0) {
       donsList.innerHTML = c.dons.map((d, i) => `
         <div class="don-item" style="animation-delay: ${i * 0.08}s">
-          <img class="don-avatar" src="${d.avatar_url}" alt="${d.prenom}" loading="lazy">
+          <div class="don-avatar" style="display:flex;align-items:center;justify-content:center;background:#16a34a;color:#fff;font-weight:700;font-size:1rem;">${d.prenom.charAt(0).toUpperCase()}</div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start">
               <span class="font-semibold text-gray-800">${d.prenom}</span>

@@ -367,7 +367,7 @@
       }
       list.innerHTML = dons.map(d => `
         <div class="comment-row fade-in" id="comment-${d.id}">
-          <img src="${d.avatar_url || 'https://i.pravatar.cc/40?u=' + d.id}" class="w-10 h-10 rounded-full flex-shrink-0" alt="">
+          <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-green-600 text-white font-bold text-sm">${d.prenom.charAt(0).toUpperCase()}</div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
               <span class="font-semibold text-gray-800 text-sm">${d.prenom}</span>

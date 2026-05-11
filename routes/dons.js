@@ -158,15 +158,12 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Cagnotte introuvable' });
     }
 
-    const avatarSeed = prenom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '-' + Date.now();
-    const avatarUrl = `https://i.pravatar.cc/40?u=${avatarSeed}`;
-
     // Insérer le don directement en confirmed
     const { rows: donRows } = await pool.query(`
-      INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, avatar_url, payram_invoice_id, confirmed_at)
-      VALUES ($1, $2, $3, $4, 'confirmed', $5, $6, NOW())
+      INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, payram_invoice_id, confirmed_at)
+      VALUES ($1, $2, $3, $4, 'confirmed', $5, NOW())
       RETURNING id
-    `, [cagnotte_id, prenom.trim(), amountCents, (message || '').trim(), avatarUrl, 'don_' + Date.now()]);
+    `, [cagnotte_id, prenom.trim(), amountCents, (message || '').trim(), 'don_' + Date.now()]);
 
     const donId = donRows[0].id;
 
