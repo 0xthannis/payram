@@ -8,6 +8,17 @@ const path = require('path');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
+// Vérifier DATABASE_URL
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl || dbUrl.includes('[PASSWORD]') || dbUrl.includes('[PROJECT_REF]')) {
+  console.error('❌ DATABASE_URL manquante ou invalide !');
+  console.error('   Valeur actuelle:', dbUrl || '(vide)');
+  console.error('   → Ajoute DATABASE_URL dans Railway → Variables');
+  console.error('   → Copie la connection string depuis Supabase → Connect → URI');
+  process.exit(1);
+}
+
+console.log('🔌 Connexion à PostgreSQL...');
 const pool = require('./pool');
 
 async function migrate() {
