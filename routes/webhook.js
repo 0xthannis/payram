@@ -53,16 +53,19 @@ router.post('/payram', (req, res) => {
     return res.status(400).json({ error: 'JSON invalide' });
   }
 
-  console.log(`📩 Webhook PayRam reçu : ${event.type || 'unknown'}`);
+  const eventType = event.event || event.type || 'unknown';
+  console.log(`📩 Webhook PayRam reçu : ${eventType}`);
+  console.log(`📩 Payload:`, JSON.stringify(event));
 
-  // Traiter l'événement payment.completed ou payment.confirmed
-  if (event.type === 'payment.completed' || event.type === 'payment.confirmed') {
-    const invoiceId = event.data?.reference_id || event.data?.invoice_id || event.data?.id;
-    const txHash = event.data?.tx_hash || event.data?.transaction_hash || '';
+  // Traiter l'événement payment.confirmed
+  if (eventType === 'payment.confirmed' || eventType === 'payment.completed') {
+    // Champs à la racine du payload (format PayRam réel)
+    const referenceId = event.reference_id;
+    const txHash = event.txid || event.tx_hash || '';
 
-    if (!invoiceId) {
-      console.warn('⚠️  Webhook payment.completed sans invoice_id');
-      return res.status(400).json({ error: 'invoice_id manquant' });
+    if (!referenceId) {
+      console.warn('⚠️  Webhook payment.confirmed sans reference_id');
+      return res.status(400).json({ error: 'reference_id manquant' });
     }
 
     // Mettre à jour le don en base
@@ -72,23 +75,23 @@ router.post('/payram', (req, res) => {
           tx_hash = ?,
           confirmed_at = datetime('now')
       WHERE payram_invoice_id = ? AND status = 'pending'
-    `).run(txHash, invoiceId);
+    `).run(txHash, referenceId);
 
     if (result.changes > 0) {
-      console.log(`✅ Don confirmé pour invoice ${invoiceId} (tx: ${txHash})`);
+      console.log(`✅ Don confirmé pour reference ${referenceId} (tx: ${txHash})`);
     } else {
-      console.warn(`⚠️  Aucun don pending trouvé pour invoice ${invoiceId}`);
+      console.warn(`⚠️  Aucun don pending trouvé pour reference ${referenceId}`);
     }
   }
 
   // Traiter l'événement payment.failed
-  if (event.type === 'payment.failed') {
-    const invoiceId = event.data?.reference_id || event.data?.invoice_id || event.data?.id;
-    if (invoiceId) {
+  if (eventType === 'payment.failed') {
+    const referenceId = event.reference_id;
+    if (referenceId) {
       db.prepare(`
         UPDATE dons SET status = 'failed' WHERE payram_invoice_id = ? AND status = 'pending'
-      `).run(invoiceId);
-      console.log(`❌ Don échoué pour invoice ${invoiceId}`);
+      `).run(referenceId);
+      console.log(`❌ Don échoué pour reference ${referenceId}`);
     }
   }
 
