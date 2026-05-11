@@ -170,67 +170,141 @@ function loadDonPage() {
   const backLink = document.getElementById('back-link');
   if (backLink && slug) backLink.href = `/cagnotte.html?slug=${slug}`;
 
-  // Boutons de montant prédéfini
+  // === MONTANTS ===
   const amountBtns = document.querySelectorAll('.amount-btn');
   const customInput = document.getElementById('custom-amount');
   const hiddenAmount = document.getElementById('amount-value');
+  const errorEl = document.getElementById('don-error');
 
-  let selectedAmount = null;
-
+  // Sélection montant prédéfini
   amountBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       amountBtns.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedAmount = parseInt(btn.dataset.amount);
-      hiddenAmount.value = selectedAmount;
+      hiddenAmount.value = btn.dataset.amount;
       customInput.value = '';
     });
   });
 
-  customInput.addEventListener('input', () => {
+  // Montant libre — symbole € quand on sort du champ
+  let rawCustomValue = '';
+  customInput.addEventListener('focus', () => {
     amountBtns.forEach(b => b.classList.remove('selected'));
-    const val = parseFloat(customInput.value);
+    // Enlever le symbole € quand on clique dedans
+    customInput.value = rawCustomValue;
+  });
+
+  customInput.addEventListener('input', () => {
+    // Garder que les chiffres
+    rawCustomValue = customInput.value.replace(/[^0-9]/g, '');
+    customInput.value = rawCustomValue;
+    const val = parseInt(rawCustomValue);
     if (!isNaN(val) && val >= 1) {
-      selectedAmount = val;
       hiddenAmount.value = val;
     } else {
-      selectedAmount = null;
       hiddenAmount.value = '';
     }
   });
 
-  customInput.addEventListener('focus', () => {
-    amountBtns.forEach(b => b.classList.remove('selected'));
+  customInput.addEventListener('blur', () => {
+    // Ajouter le symbole € quand on quitte le champ
+    if (rawCustomValue && parseInt(rawCustomValue) >= 1) {
+      customInput.value = rawCustomValue + ' €';
+    }
   });
 
-  // Soumission du formulaire
-  const form = document.getElementById('don-form');
-  const submitBtn = document.getElementById('submit-don');
-  const errorEl = document.getElementById('don-error');
+  // === BOUTON "Je donne" → ouvre la popup ===
+  const btnContinuer = document.getElementById('btn-continuer');
+  const modal = document.getElementById('payment-modal');
+  const modalClose = document.getElementById('modal-close');
+  const modalAmountDisplay = document.getElementById('modal-amount-display');
+  const btnPayAmount = document.getElementById('btn-pay-amount');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorEl.classList.add('hidden');
-
-    const prenom = document.getElementById('prenom').value.trim();
+  btnContinuer.addEventListener('click', () => {
     const amount = hiddenAmount.value;
-    const message = document.getElementById('message').value.trim();
-
-    if (!prenom) {
-      errorEl.textContent = 'Merci d\'indiquer ton prénom.';
-      errorEl.classList.remove('hidden');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) < 1) {
+    if (!amount || parseInt(amount) < 1) {
       errorEl.textContent = 'Choisis un montant (minimum 1 €).';
       errorEl.classList.remove('hidden');
       return;
     }
+    errorEl.classList.add('hidden');
+
+    // Afficher le montant dans la popup
+    modalAmountDisplay.textContent = amount + ' €';
+    btnPayAmount.textContent = amount + ' €';
+    modal.classList.remove('hidden');
+    document.getElementById('pay-prenom').focus();
+  });
+
+  // Fermer la popup
+  modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  // === FORMAT CARTE BANCAIRE (espaces auto) ===
+  const cardInput = document.getElementById('pay-card');
+  cardInput.addEventListener('input', () => {
+    let v = cardInput.value.replace(/\D/g, '').substring(0, 16);
+    cardInput.value = v.replace(/(.{4})/g, '$1 ').trim();
+  });
+
+  // Format expiration MM/AA
+  const expiryInput = document.getElementById('pay-expiry');
+  expiryInput.addEventListener('input', () => {
+    let v = expiryInput.value.replace(/\D/g, '').substring(0, 4);
+    if (v.length >= 3) v = v.substring(0, 2) + '/' + v.substring(2);
+    expiryInput.value = v;
+  });
+
+  // CVC chiffres seulement
+  const cvcInput = document.getElementById('pay-cvc');
+  cvcInput.addEventListener('input', () => {
+    cvcInput.value = cvcInput.value.replace(/\D/g, '').substring(0, 4);
+  });
+
+  // === SOUMISSION DU PAIEMENT ===
+  const paymentForm = document.getElementById('payment-form');
+  const btnPayer = document.getElementById('btn-payer');
+  const payError = document.getElementById('pay-error');
+
+  paymentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    payError.classList.add('hidden');
+
+    const prenom = document.getElementById('pay-prenom').value.trim();
+    const nom = document.getElementById('pay-nom').value.trim();
+    const card = cardInput.value.replace(/\s/g, '');
+    const expiry = expiryInput.value;
+    const cvc = cvcInput.value;
+    const message = document.getElementById('pay-message').value.trim();
+    const amount = parseFloat(hiddenAmount.value);
+
+    // Validation
+    if (!prenom || !nom) {
+      payError.textContent = 'Merci de renseigner ton prénom et nom.';
+      payError.classList.remove('hidden');
+      return;
+    }
+    if (card.length < 13) {
+      payError.textContent = 'Numéro de carte invalide.';
+      payError.classList.remove('hidden');
+      return;
+    }
+    if (!expiry || expiry.length < 4) {
+      payError.textContent = 'Date d\'expiration invalide.';
+      payError.classList.remove('hidden');
+      return;
+    }
+    if (!cvc || cvc.length < 3) {
+      payError.textContent = 'CVC invalide.';
+      payError.classList.remove('hidden');
+      return;
+    }
 
     // Désactiver le bouton
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner"></span> Redirection en cours...';
+    btnPayer.disabled = true;
+    btnPayer.innerHTML = '<span class="spinner"></span> Traitement en cours...';
 
     try {
       const res = await fetch('/api/dons', {
@@ -238,24 +312,26 @@ function loadDonPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cagnotte_id: parseInt(cagnotteId),
-          prenom,
-          amount: parseFloat(amount),
+          prenom: prenom + ' ' + nom,
+          amount,
           message
         })
       });
 
       const data = await res.json();
 
-      if (data.success && data.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (data.success) {
+        // Rediriger vers la page de remerciement
+        const redirectUrl = data.checkout_url || `/confirmation.html?don_id=${data.don_id}`;
+        window.location.href = redirectUrl;
       } else {
         throw new Error(data.error || 'Erreur inconnue');
       }
     } catch (err) {
-      errorEl.textContent = err.message || 'Une erreur est survenue. Réessaye.';
-      errorEl.classList.remove('hidden');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '🤲 Je donne ma sadaqa';
+      payError.textContent = err.message || 'Une erreur est survenue. Réessaye.';
+      payError.classList.remove('hidden');
+      btnPayer.disabled = false;
+      btnPayer.innerHTML = '🔒 Payer <span id="btn-pay-amount">' + amount + ' €</span>';
     }
   });
 

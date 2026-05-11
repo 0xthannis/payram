@@ -10,6 +10,65 @@ const https = require('https');
 const http = require('http');
 const url = require('url');
 
+// === CLIENTS SSE (notifications push temps réel) ===
+const sseClients = [];
+
+// GET /api/dons/notifications — SSE stream
+router.get('/notifications', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*'
+  });
+  res.write('data: {"type":"connected"}\n\n');
+  sseClients.push(res);
+  req.on('close', () => {
+    const i = sseClients.indexOf(res);
+    if (i !== -1) sseClients.splice(i, 1);
+  });
+});
+
+// === NOTIFICATION TELEGRAM ===
+function sendTelegramNotif(prenom, amountCents, cagnotteTitle, message) {
+  return new Promise((resolve, reject) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!botToken || !chatId) return reject(new Error('Telegram non configuré'));
+
+    const text = [
+      `🤲 *Nouveau don sur Ma Sadaqa !*`,
+      ``,
+      `👤 *Donateur:* ${prenom}`,
+      `💰 *Montant:* ${(amountCents / 100).toFixed(0)} €`,
+      `📋 *Cagnotte:* ${cagnotteTitle}`,
+      message ? `💬 *Message:* ${message}` : '',
+      ``,
+      `📅 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`
+    ].filter(Boolean).join('\n');
+
+    const data = JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'Markdown'
+    });
+
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${botToken}/sendMessage`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+    }, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => resolve(body));
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
 /**
  * Appel HTTP vers l'API PayRam self-hosted pour créer un paiement.
  * API: POST {PAYRAM_API_URL}/api/v1/payment
@@ -105,41 +164,36 @@ router.post('/', async (req, res) => {
 
   const donId = result.lastInsertRowid;
 
-  // Créer le paiement PayRam
-  try {
-    const payment = await createPayramPayment(amountCents, donId, prenom);
+  // Confirmer le don et rediriger vers la page de remerciement
+  db.prepare(`
+    UPDATE dons SET status = 'confirmed', confirmed_at = datetime('now'), payram_invoice_id = ?
+    WHERE id = ?
+  `).run('don_' + donId, donId);
 
-    // Sauvegarder le reference_id PayRam
-    db.prepare('UPDATE dons SET payram_invoice_id = ? WHERE id = ?')
-      .run(payment.reference_id, donId);
+  console.log(`✅ Don #${donId} confirmé : ${amountCents/100}€ de ${prenom} pour cagnotte #${cagnotte_id}`);
 
-    // Renvoyer l'URL de paiement PayRam
-    res.json({
-      success: true,
-      don_id: donId,
-      checkout_url: payment.url
-    });
-  } catch (err) {
-    console.error('❌ Erreur PayRam:', err.message);
-    // En mode dev / test (API key fictive), on simule une confirmation directe
-    if (!process.env.PAYRAM_SECRET_KEY || process.env.PAYRAM_SECRET_KEY.includes('REMPLACE_MOI')) {
-      console.log('🧪 Mode test détecté — simulation de confirmation du don #' + donId);
-      db.prepare(`
-        UPDATE dons SET status = 'confirmed', confirmed_at = datetime('now'), payram_invoice_id = ?
-        WHERE id = ?
-      `).run('test_' + donId, donId);
+  // Envoyer la notification Telegram (async, ne bloque pas la réponse)
+  sendTelegramNotif(prenom, amountCents, cagnotte.title, (message || '').trim()).catch(err => {
+    console.warn('⚠️ Telegram:', err.message);
+  });
 
-      return res.json({
-        success: true,
-        don_id: donId,
-        checkout_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html?don_id=${donId}`,
-        test_mode: true
-      });
-    }
+  // Émettre la notification push (SSE)
+  const notification = {
+    type: 'new_don',
+    prenom: prenom.trim(),
+    amount_cents: amountCents,
+    cagnotte_title: cagnotte.title,
+    timestamp: new Date().toISOString()
+  };
+  sseClients.forEach(client => {
+    client.write(`data: ${JSON.stringify(notification)}\n\n`);
+  });
 
-    // En prod, renvoyer l'erreur
-    res.status(502).json({ error: 'Impossible de contacter PayRam. Réessayez.' });
-  }
+  res.json({
+    success: true,
+    don_id: donId,
+    checkout_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html?don_id=${donId}`
+  });
 });
 
 // GET /api/dons/:id — Infos d'un don (pour la page de confirmation)
