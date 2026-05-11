@@ -59,17 +59,17 @@ router.post('/payram', (req, res) => {
 
   // Traiter l'événement payment.confirmed
   if (eventType === 'payment.confirmed' || eventType === 'payment.completed') {
-    // Champs à la racine du payload (format PayRam réel)
-    const referenceId = event.reference_id;
+    const referenceId = event.reference_id || '';
     const txHash = event.txid || event.tx_hash || '';
+    const amountUSD = parseFloat(event.amount) || 0;
+    const amountCents = Math.round(amountUSD * 100);
+    const customerEmail = event.customer_email || '';
+    const customerId = event.customer_id || '';
 
-    if (!referenceId) {
-      console.warn('⚠️  Webhook payment.confirmed sans reference_id');
-      return res.status(400).json({ error: 'reference_id manquant' });
-    }
+    console.log(`💰 Paiement confirmé: ${amountUSD} USD, ref: ${referenceId}, email: ${customerEmail}`);
 
-    // Mettre à jour le don en base
-    const result = db.prepare(`
+    // D'abord essayer de mettre à jour un don pending existant
+    const updateResult = db.prepare(`
       UPDATE dons
       SET status = 'confirmed',
           tx_hash = ?,
@@ -77,10 +77,21 @@ router.post('/payram', (req, res) => {
       WHERE payram_invoice_id = ? AND status = 'pending'
     `).run(txHash, referenceId);
 
-    if (result.changes > 0) {
-      console.log(`✅ Don confirmé pour reference ${referenceId} (tx: ${txHash})`);
+    if (updateResult.changes > 0) {
+      console.log(`✅ Don pending mis à jour pour reference ${referenceId}`);
     } else {
-      console.warn(`⚠️  Aucun don pending trouvé pour reference ${referenceId}`);
+      // Sinon créer un nouveau don confirmé (paiement via widget)
+      // Utiliser la première cagnotte active par défaut
+      const cagnotte = db.prepare('SELECT id FROM cagnottes WHERE is_active = 1 ORDER BY id ASC LIMIT 1').get();
+      const cagnotteId = cagnotte ? cagnotte.id : 1;
+
+      const avatarUrl = `https://i.pravatar.cc/40?u=payram-${Date.now()}`;
+      db.prepare(`
+        INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, payram_invoice_id, tx_hash, avatar_url, confirmed_at)
+        VALUES (?, 'Donateur', ?, '', 'confirmed', ?, ?, ?, datetime('now'))
+      `).run(cagnotteId, amountCents, referenceId, txHash, avatarUrl);
+
+      console.log(`✅ Nouveau don créé: ${amountUSD}$ pour cagnotte #${cagnotteId} (ref: ${referenceId})`);
     }
   }
 

@@ -159,4 +159,31 @@ router.get('/:id', (req, res) => {
   res.json(don);
 });
 
+// POST /api/dons/save-info — Sauvegarder les infos donateur (appelé avant paiement widget)
+router.post('/save-info', (req, res) => {
+  const db = req.app.locals.db;
+  const { cagnotte_id, prenom, message } = req.body;
+
+  if (!cagnotte_id || !prenom) {
+    return res.status(400).json({ error: 'cagnotte_id et prenom requis' });
+  }
+
+  // Sauvegarder en session côté serveur (table temporaire)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS donor_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cagnotte_id INTEGER NOT NULL,
+      prenom TEXT NOT NULL,
+      message TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+
+  const result = db.prepare(`
+    INSERT INTO donor_sessions (cagnotte_id, prenom, message) VALUES (?, ?, ?)
+  `).run(parseInt(cagnotte_id), prenom.trim(), (message || '').trim());
+
+  res.json({ success: true, session_id: result.lastInsertRowid });
+});
+
 module.exports = router;
