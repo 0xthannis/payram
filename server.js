@@ -19,10 +19,10 @@ app.locals.pool = pool;
 // Middlewares
 // ============================================
 
-// Forcer HTTPS en production (Railway proxy)
+// Forcer HTTPS (Railway proxy envoie x-forwarded-proto)
 app.set('trust proxy', 1);
 app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+  if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
     return res.redirect(301, 'https://' + req.hostname + req.originalUrl);
   }
   next();
