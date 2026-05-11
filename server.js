@@ -27,6 +27,15 @@ app.locals.db = db;
 // Middlewares
 // ============================================
 
+// Forcer HTTPS en production (Railway proxy)
+app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, 'https://' + req.hostname + req.originalUrl);
+  }
+  next();
+});
+
 // Body parsers — raw pour webhooks, json/urlencoded pour le reste
 app.use('/webhook/payram', express.raw({ type: 'application/json' }));
 app.use(express.json());
