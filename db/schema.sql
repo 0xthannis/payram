@@ -1,35 +1,34 @@
 -- ============================================
--- schema.sql — Structure de la base de données
+-- schema.sql — Structure de la base de données (PostgreSQL)
 -- ============================================
 
 -- Table des cagnottes
 CREATE TABLE IF NOT EXISTS cagnottes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  slug TEXT UNIQUE NOT NULL,                  -- URL-friendly : "operation-toit-mehdi"
-  title TEXT NOT NULL,                        -- Titre affiché
-  story TEXT NOT NULL,                        -- Histoire complète (HTML autorisé)
-  image_url TEXT NOT NULL,                    -- URL de l'image de couverture
-  goal_cents INTEGER NOT NULL,               -- Objectif en centimes (2400€ = 240000)
-  baseline_collected_cents INTEGER DEFAULT 0, -- Montant de base pré-seed (centimes)
-  baseline_donors INTEGER DEFAULT 0,          -- Nombre de donateurs pré-seed
-  is_active INTEGER DEFAULT 1,               -- 1 = active, 0 = désactivée
-  created_at TEXT DEFAULT (datetime('now'))
+  id SERIAL PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  story TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  goal_cents INTEGER NOT NULL,
+  baseline_collected_cents INTEGER DEFAULT 0,
+  baseline_donors INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Table des dons
 CREATE TABLE IF NOT EXISTS dons (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  cagnotte_id INTEGER NOT NULL,
-  prenom TEXT NOT NULL,                       -- Prénom du donateur
-  amount_cents INTEGER NOT NULL,              -- Montant en centimes
-  message TEXT DEFAULT '',                    -- Message optionnel
-  status TEXT DEFAULT 'pending',              -- pending | confirmed | failed
-  payram_invoice_id TEXT,                     -- ID de l'invoice PayRam
-  tx_hash TEXT,                               -- Hash de la transaction blockchain
-  avatar_url TEXT,                            -- URL de l'avatar (pravatar)
-  created_at TEXT DEFAULT (datetime('now')),
-  confirmed_at TEXT,                          -- Date de confirmation du paiement
-  FOREIGN KEY (cagnotte_id) REFERENCES cagnottes(id) ON DELETE CASCADE
+  id SERIAL PRIMARY KEY,
+  cagnotte_id INTEGER NOT NULL REFERENCES cagnottes(id) ON DELETE CASCADE,
+  prenom TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  message TEXT DEFAULT '',
+  status TEXT DEFAULT 'pending',
+  payram_invoice_id TEXT,
+  tx_hash TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
 );
 
 -- Index pour performances

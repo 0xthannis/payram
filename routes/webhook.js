@@ -20,93 +20,66 @@ function verifySignature(payload, signature, secret) {
 }
 
 // POST /webhook/payram
-router.post('/payram', (req, res) => {
-  const db = req.app.locals.db;
+router.post('/payram', async (req, res) => {
+  const pool = req.app.locals.pool;
   const secret = process.env.PAYRAM_WEBHOOK_SECRET;
 
-  // Le body est en raw (Buffer) grâce au middleware dans server.js
   const payload = req.body;
   const signature = req.headers['x-payram-signature'];
 
-  // Vérification de la signature
   if (secret && secret !== 'whsec_REMPLACE_MOI_par_ton_secret_webhook') {
-    if (!signature) {
-      console.warn('⚠️  Webhook reçu sans signature');
-      return res.status(401).json({ error: 'Signature manquante' });
-    }
+    if (!signature) return res.status(401).json({ error: 'Signature manquante' });
     try {
-      if (!verifySignature(payload, signature, secret)) {
-        console.warn('⚠️  Webhook avec signature invalide');
-        return res.status(401).json({ error: 'Signature invalide' });
-      }
-    } catch (err) {
-      console.warn('⚠️  Erreur vérification signature:', err.message);
-      return res.status(401).json({ error: 'Signature invalide' });
-    }
+      if (!verifySignature(payload, signature, secret)) return res.status(401).json({ error: 'Signature invalide' });
+    } catch (err) { return res.status(401).json({ error: 'Signature invalide' }); }
   }
 
-  // Parser le body
   let event;
-  try {
-    event = JSON.parse(payload.toString());
-  } catch (e) {
-    return res.status(400).json({ error: 'JSON invalide' });
-  }
+  try { event = JSON.parse(payload.toString()); }
+  catch (e) { return res.status(400).json({ error: 'JSON invalide' }); }
 
   const eventType = event.event || event.type || 'unknown';
-  console.log(`📩 Webhook PayRam reçu : ${eventType}`);
-  console.log(`📩 Payload:`, JSON.stringify(event));
+  console.log(`📩 Webhook PayRam: ${eventType}`, JSON.stringify(event));
 
-  // Traiter l'événement payment.confirmed
-  if (eventType === 'payment.confirmed' || eventType === 'payment.completed') {
-    const referenceId = event.reference_id || '';
-    const txHash = event.txid || event.tx_hash || '';
-    const amountUSD = parseFloat(event.amount) || 0;
-    const amountCents = Math.round(amountUSD * 100);
-    const customerEmail = event.customer_email || '';
-    const customerId = event.customer_id || '';
+  try {
+    if (eventType === 'payment.confirmed' || eventType === 'payment.completed') {
+      const referenceId = event.reference_id || '';
+      const txHash = event.txid || event.tx_hash || '';
+      const amountUSD = parseFloat(event.amount) || 0;
+      const amountCents = Math.round(amountUSD * 100);
 
-    console.log(`💰 Paiement confirmé: ${amountUSD} USD, ref: ${referenceId}, email: ${customerEmail}`);
+      const updateResult = await pool.query(
+        `UPDATE dons SET status = 'confirmed', tx_hash = $1, confirmed_at = NOW() WHERE payram_invoice_id = $2 AND status = 'pending'`,
+        [txHash, referenceId]
+      );
 
-    // D'abord essayer de mettre à jour un don pending existant
-    const updateResult = db.prepare(`
-      UPDATE dons
-      SET status = 'confirmed',
-          tx_hash = ?,
-          confirmed_at = datetime('now')
-      WHERE payram_invoice_id = ? AND status = 'pending'
-    `).run(txHash, referenceId);
+      if (updateResult.rowCount > 0) {
+        console.log(`✅ Don mis à jour pour ref ${referenceId}`);
+      } else {
+        const { rows } = await pool.query('SELECT id FROM cagnottes WHERE is_active = 1 ORDER BY id ASC LIMIT 1');
+        const cagnotteId = rows[0] ? rows[0].id : 1;
+        const avatarUrl = `https://i.pravatar.cc/40?u=payram-${Date.now()}`;
 
-    if (updateResult.changes > 0) {
-      console.log(`✅ Don pending mis à jour pour reference ${referenceId}`);
-    } else {
-      // Sinon créer un nouveau don confirmé (paiement via widget)
-      // Utiliser la première cagnotte active par défaut
-      const cagnotte = db.prepare('SELECT id FROM cagnottes WHERE is_active = 1 ORDER BY id ASC LIMIT 1').get();
-      const cagnotteId = cagnotte ? cagnotte.id : 1;
-
-      const avatarUrl = `https://i.pravatar.cc/40?u=payram-${Date.now()}`;
-      db.prepare(`
-        INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, payram_invoice_id, tx_hash, avatar_url, confirmed_at)
-        VALUES (?, 'Donateur', ?, '', 'confirmed', ?, ?, ?, datetime('now'))
-      `).run(cagnotteId, amountCents, referenceId, txHash, avatarUrl);
-
-      console.log(`✅ Nouveau don créé: ${amountUSD}$ pour cagnotte #${cagnotteId} (ref: ${referenceId})`);
+        await pool.query(
+          `INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, payram_invoice_id, tx_hash, avatar_url, confirmed_at)
+           VALUES ($1, 'Donateur', $2, '', 'confirmed', $3, $4, $5, NOW())`,
+          [cagnotteId, amountCents, referenceId, txHash, avatarUrl]
+        );
+        console.log(`✅ Nouveau don créé: ${amountUSD}$ pour cagnotte #${cagnotteId}`);
+      }
     }
+
+    if (eventType === 'payment.failed') {
+      const referenceId = event.reference_id;
+      if (referenceId) {
+        await pool.query(`UPDATE dons SET status = 'failed' WHERE payram_invoice_id = $1 AND status = 'pending'`, [referenceId]);
+        console.log(`❌ Don échoué pour ref ${referenceId}`);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Webhook error:', err.message);
   }
 
-  // Traiter l'événement payment.failed
-  if (eventType === 'payment.failed') {
-    const referenceId = event.reference_id;
-    if (referenceId) {
-      db.prepare(`
-        UPDATE dons SET status = 'failed' WHERE payram_invoice_id = ? AND status = 'pending'
-      `).run(referenceId);
-      console.log(`❌ Don échoué pour reference ${referenceId}`);
-    }
-  }
-
-  // Toujours répondre 200 pour accuser réception
   res.json({ received: true });
 });
 

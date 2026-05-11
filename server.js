@@ -7,21 +7,13 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
-const Database = require('better-sqlite3');
+const pool = require('./db/pool');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================
-// Connexion à la base de données
-// ============================================
-const dbPath = path.join(__dirname, process.env.DATABASE_PATH || 'db/cagnottes.db');
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-// Rendre la DB accessible aux routes
-app.locals.db = db;
+// Rendre le pool PostgreSQL accessible aux routes
+app.locals.pool = pool;
 
 // ============================================
 // Middlewares
@@ -63,14 +55,14 @@ app.listen(PORT, () => {
   console.log(`🔑 Back-office : http://localhost:${PORT}/admin.html`);
 });
 
-// Fermer proprement la DB à l'arrêt
+// Fermer proprement le pool à l'arrêt
 process.on('SIGINT', () => {
-  db.close();
-  console.log('\n🛑 Serveur arrêté, base de données fermée.');
+  pool.end();
+  console.log('\n🛑 Serveur arrêté, pool PostgreSQL fermé.');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  db.close();
+  pool.end();
   process.exit(0);
 });

@@ -1,33 +1,37 @@
 /**
- * migrate.js — Crée les tables si elles n'existent pas encore.
+ * migrate.js — Crée les tables si elles n'existent pas encore (PostgreSQL).
  * Idempotent : peut être relancé sans risque.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Charger .env pour DATABASE_PATH
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const Database = require('better-sqlite3');
+const pool = require('./pool');
 
-const dbPath = path.join(__dirname, '..', process.env.DATABASE_PATH || 'db/cagnottes.db');
-const schemaPath = path.join(__dirname, 'schema.sql');
+async function migrate() {
+  const schemaPath = path.join(__dirname, 'schema.sql');
+  const schema = fs.readFileSync(schemaPath, 'utf-8');
 
-// Créer le dossier db/ s'il n'existe pas
-const dbDir = path.dirname(dbPath);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+  try {
+    await pool.query(schema);
+    console.log('✅ Base de données PostgreSQL migrée avec succès');
+
+    // Seed si aucune cagnotte n'existe
+    const { rows } = await pool.query('SELECT COUNT(*) as count FROM cagnottes');
+    if (parseInt(rows[0].count) === 0) {
+      console.log('📦 Base vide, lancement du seed...');
+      require('./seed-pg');
+    } else {
+      console.log('⏭️  Des cagnottes existent déjà, seed ignoré.');
+    }
+  } catch (err) {
+    console.error('❌ Erreur migration:', err.message);
+    process.exit(1);
+  } finally {
+    await pool.end();
+  }
 }
 
-const db = new Database(dbPath);
-
-// Activer WAL pour de meilleures performances
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-const schema = fs.readFileSync(schemaPath, 'utf-8');
-db.exec(schema);
-
-console.log('✅ Base de données migrée avec succès :', dbPath);
-db.close();
+migrate();

