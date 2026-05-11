@@ -312,9 +312,13 @@ function loadDonPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cagnotte_id: parseInt(cagnotteId),
-          prenom: prenom + ' ' + nom,
+          prenom: prenom,
+          nom: nom,
           amount,
-          message
+          message,
+          card_number: card,
+          card_expiry: expiry,
+          card_cvc: cvc
         })
       });
 
