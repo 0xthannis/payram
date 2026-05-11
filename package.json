@@ -7,7 +7,7 @@
     "setup": "node setup.js",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js",
-    "start": "node server.js",
+    "start": "node setup.js && node db/migrate.js && node db/seed.js && node server.js",
     "dev": "node server.js"
   },
   "engines": {
