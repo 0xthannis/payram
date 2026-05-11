@@ -62,6 +62,10 @@ function createPayramPayment(amountCents, donId, donorPrenom) {
       });
     });
 
+    req.setTimeout(10000, () => {
+      req.destroy();
+      reject(new Error('PayRam timeout après 10s'));
+    });
     req.on('error', reject);
     req.write(data);
     req.end();
