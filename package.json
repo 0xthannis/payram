@@ -1,0 +1,21 @@
+{
+  "name": "ma-sadaqa",
+  "version": "1.0.0",
+  "description": "Ma Sadaqa — Plateforme de collecte solidaire pour la communauté musulmane, avec paiement sécurisé via PayRam",
+  "main": "server.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "migrate": "node db/migrate.js",
+    "seed": "node db/seed.js",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2"
+  }
+}

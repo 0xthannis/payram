@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Ma Sadaqa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔑</text></svg>">
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Écran de login -->
+  <div id="login-screen" class="admin-login px-4">
+    <div class="bg-white rounded-2xl shadow-sm p-8">
+      <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center">🔑 Back-office</h1>
+      <p class="text-gray-500 text-center mb-6 text-sm">Entrez le mot de passe admin</p>
+      <input type="password" id="admin-password" placeholder="Mot de passe"
+        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none transition mb-4">
+      <button onclick="adminLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition">
+        Connexion
+      </button>
+      <p id="login-error" class="hidden text-red-500 text-sm mt-3 text-center"></p>
+    </div>
+  </div>
+
+  <!-- Dashboard (caché par défaut) -->
+  <div id="admin-dashboard" class="hidden">
+    <!-- Header admin -->
+    <header class="bg-white border-b border-gray-200 px-4 py-4">
+      <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <h1 class="text-xl font-bold text-gray-800">🔑 Ma Sadaqa — Administration</h1>
+        <div class="flex items-center gap-4">
+          <a href="/" class="text-sm text-blue-600 hover:underline">← Voir le site</a>
+          <button onclick="adminLogout()" class="text-sm text-gray-500 hover:text-red-500 transition">Déconnexion</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+
+      <!-- Stats cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <p class="text-sm text-gray-500 mb-1">Total collecté</p>
+          <p id="stat-collected" class="text-2xl font-bold text-green-600">—</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <p class="text-sm text-gray-500 mb-1">Dons confirmés</p>
+          <p id="stat-dons" class="text-2xl font-bold text-gray-800">—</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <p class="text-sm text-gray-500 mb-1">Cagnottes actives</p>
+          <p id="stat-cagnottes" class="text-2xl font-bold text-gray-800">—</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <p class="text-sm text-gray-500 mb-1">Taux de conversion</p>
+          <p id="stat-conversion" class="text-2xl font-bold text-blue-600">—</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-800">Cagnottes</h2>
+        <button onclick="showCreateForm()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition">
+          + Nouvelle cagnotte
+        </button>
+      </div>
+
+      <!-- Formulaire de création (caché) -->
+      <div id="create-form" class="hidden bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Créer une cagnotte</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <input id="new-title" type="text" placeholder="Titre" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500">
+          <input id="new-goal" type="number" placeholder="Objectif (€)" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500">
+          <input id="new-image" type="url" placeholder="URL image (optionnel)" class="px-4 py-2 border rounded-lg outline-none focus:border-green-500 sm:col-span-2">
+        </div>
+        <textarea id="new-story" rows="4" placeholder="Histoire de la cagnotte..."
+          class="w-full px-4 py-2 border rounded-lg outline-none focus:border-green-500 mb-4 resize-none"></textarea>
+        <div class="flex gap-3">
+          <button onclick="createCagnotte()" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
+            Créer
+          </button>
+          <button onclick="hideCreateForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      <!-- Liste des cagnottes -->
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Cagnotte</th>
+              <th>Collecté</th>
+              <th>Objectif</th>
+              <th>Donateurs</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cagnottes-tbody">
+            <tr><td colspan="6" class="text-center py-8 text-gray-400">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Dons d'une cagnotte (caché par défaut) -->
+      <div id="dons-panel" class="hidden mt-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="dons-panel-title" class="text-xl font-bold text-gray-800"></h2>
+          <button onclick="hideDonsPanel()" class="text-sm text-gray-500 hover:text-gray-700">✕ Fermer</button>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Prénom</th>
+                <th>Montant</th>
+                <th>Message</th>
+                <th>Statut</th>
+                <th>PayRam ID</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="dons-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let adminPwd = '';
+
+    function formatEuros(cents) {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(cents / 100);
+    }
+
+    // LOGIN
+    function adminLogin() {
+      adminPwd = document.getElementById('admin-password').value;
+      fetchDashboard();
+    }
+
+    document.getElementById('admin-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') adminLogin();
+    });
+
+    function adminLogout() {
+      adminPwd = '';
+      document.getElementById('admin-dashboard').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('admin-password').value = '';
+    }
+
+    // API helper
+    async function adminFetch(url, options = {}) {
+      options.headers = { ...options.headers, 'X-Admin-Password': adminPwd, 'Content-Type': 'application/json' };
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        document.getElementById('login-error').textContent = 'Mot de passe incorrect';
+        document.getElementById('login-error').classList.remove('hidden');
+        throw new Error('Unauthorized');
+      }
+      return res.json();
+    }
+
+    // DASHBOARD
+    async function fetchDashboard() {
+      try {
+        const stats = await adminFetch('/api/admin/dashboard');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('login-error').classList.add('hidden');
+
+        document.getElementById('stat-collected').textContent = formatEuros(stats.total_collected_cents);
+        document.getElementById('stat-dons').textContent = stats.total_dons;
+        document.getElementById('stat-cagnottes').textContent = stats.total_cagnottes;
+        document.getElementById('stat-conversion').textContent = stats.conversion_rate + '%';
+
+        loadCagnottes();
+      } catch (e) { /* login error handled above */ }
+    }
+
+    // CAGNOTTES LIST
+    async function loadCagnottes() {
+      const data = await adminFetch('/api/admin/cagnottes');
+      const tbody = document.getElementById('cagnottes-tbody');
+      tbody.innerHTML = data.map(c => `
+        <tr>
+          <td class="font-medium">${c.title}</td>
+          <td class="font-semibold text-green-600">${formatEuros(c.collected_cents)}</td>
+          <td>${formatEuros(c.goal_cents)}</td>
+          <td>${c.donors_count}</td>
+          <td>${c.is_active ? '<span class="status-badge status-confirmed">Active</span>' : '<span class="status-badge status-failed">Inactive</span>'}</td>
+          <td class="space-x-2">
+            <button onclick="viewDons(${c.id}, '${c.title.replace(/'/g, "\\'")}')" class="text-blue-600 hover:underline text-sm">Dons</button>
+            <button onclick="toggleActive(${c.id}, ${c.is_active})" class="text-yellow-600 hover:underline text-sm">${c.is_active ? 'Désactiver' : 'Activer'}</button>
+            <button onclick="deleteCagnotte(${c.id})" class="text-red-600 hover:underline text-sm">Supprimer</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // CREATE
+    function showCreateForm() { document.getElementById('create-form').classList.remove('hidden'); }
+    function hideCreateForm() { document.getElementById('create-form').classList.add('hidden'); }
+
+    async function createCagnotte() {
+      const data = {
+        title: document.getElementById('new-title').value,
+        story: document.getElementById('new-story').value,
+        image_url: document.getElementById('new-image').value,
+        goal: parseFloat(document.getElementById('new-goal').value)
+      };
+      await adminFetch('/api/admin/cagnottes', { method: 'POST', body: JSON.stringify(data) });
+      hideCreateForm();
+      loadCagnottes();
+      fetchDashboard();
+    }
+
+    // TOGGLE ACTIVE
+    async function toggleActive(id, current) {
+      await adminFetch(`/api/admin/cagnottes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_active: !current })
+      });
+      loadCagnottes();
+    }
+
+    // DELETE
+    async function deleteCagnotte(id) {
+      if (!confirm('Supprimer cette cagnotte et tous ses dons ? Cette action est irréversible.')) return;
+      await adminFetch(`/api/admin/cagnottes/${id}`, { method: 'DELETE' });
+      loadCagnottes();
+      fetchDashboard();
+    }
+
+    // VIEW DONS
+    async function viewDons(id, title) {
+      const dons = await adminFetch(`/api/admin/cagnottes/${id}/dons`);
+      document.getElementById('dons-panel-title').textContent = `Dons — ${title}`;
+      const tbody = document.getElementById('dons-tbody');
+      tbody.innerHTML = dons.length ? dons.map(d => `
+        <tr>
+          <td>${d.prenom}</td>
+          <td class="font-semibold">${formatEuros(d.amount_cents)}</td>
+          <td class="text-sm text-gray-500 max-w-[200px] truncate">${d.message || '—'}</td>
+          <td><span class="status-badge status-${d.status}">${d.status}</span></td>
+          <td class="text-xs text-gray-400 font-mono">${d.payram_invoice_id || '—'}</td>
+          <td class="text-sm text-gray-500">${new Date(d.created_at).toLocaleDateString('fr-FR')}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="6" class="text-center py-4 text-gray-400">Aucun don</td></tr>';
+      document.getElementById('dons-panel').classList.remove('hidden');
+      document.getElementById('dons-panel').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideDonsPanel() { document.getElementById('dons-panel').classList.add('hidden'); }
+  </script>
+</body>
+</html>

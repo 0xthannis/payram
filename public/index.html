@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ma Sadaqa — La sadaqa en ligne, simple et sécurisée</title>
+  <meta name="description" content="Ma Sadaqa — Plateforme de collecte solidaire pour la communauté musulmane. Donnez votre sadaqa en toute confiance.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤲</text></svg>">
+</head>
+<body data-page="home" class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold text-gray-800 no-underline">
+        🤲 <span>Ma Sadaqa</span>
+      </a>
+      <nav class="flex items-center gap-4 text-sm">
+        <a href="/" class="text-gray-600 hover:text-green-600 transition font-medium">Accueil</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-4xl mx-auto px-4 py-16 text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+        Donnez votre sadaqa en toute confiance
+      </h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
+        « Celui qui donne en charité l’équivalent d’une datte provenant d’un bien licite — et Allah n’accepte que ce qui est bon — Allah la reçoit de Sa main droite puis la fait fructifier pour celui qui l’a donnée. »
+      </p>
+      <p class="text-sm text-gray-500 italic mb-8">— Hadith rapporté par al-Bukhârî et Muslim</p>
+      <!-- Trust badges -->
+      <div class="trust-badges">
+        <span class="trust-badge">🔒 Paiement sécurisé</span>
+        <span class="trust-badge">✅ Données protégées</span>
+        <span class="trust-badge">🛡️ Connexion SSL</span>
+        <span class="trust-badge">🤲 100% pour les bénéficiaires</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grille des cagnottes -->
+  <main class="flex-1">
+    <div class="max-w-6xl mx-auto px-4 py-12">
+      <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Cagnottes en cours — Votre sadaqa change des vies</h2>
+      <div id="cagnottes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Skeleton loading -->
+        <div class="bg-white rounded-2xl overflow-hidden shadow animate-pulse">
+          <div class="h-48 bg-gray-200"></div>
+          <div class="p-5 space-y-3">
+            <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-200 rounded"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden shadow animate-pulse hidden sm:block">
+          <div class="h-48 bg-gray-200"></div>
+          <div class="p-5 space-y-3">
+            <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-200 rounded"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden shadow animate-pulse hidden lg:block">
+          <div class="h-48 bg-gray-200"></div>
+          <div class="p-5 space-y-3">
+            <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-200 rounded"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+        <div>
+          <h4 class="font-semibold text-white mb-3">🤲 Ma Sadaqa</h4>
+          <p class="text-gray-400 text-sm">Plateforme de sadaqa en ligne<br>pour la communauté musulmane.<br>Paiement sécurisé via PayRam.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-3">Liens utiles</h4>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><a href="/">Accueil</a></li>
+            <li><a href="#mentions">Mentions légales</a></li>
+            <li><a href="#cgv">CGU / CGV</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-3">Sécurité</h4>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li>🔒 Paiements chiffrés SSL/TLS</li>
+            <li>✅ Aucune donnée bancaire stockée</li>
+            <li>🛡️ Conformité RGPD</li>
+            <li>🤲 Fonds versés directement</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 pt-4 text-center text-sm text-gray-500">
+        © 2024 Ma Sadaqa (masadaqa.com) — Tous droits réservés. Paiement sécurisé par PayRam.
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

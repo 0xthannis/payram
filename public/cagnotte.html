@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ma Sadaqa — Chargement...</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤲</text></svg>">
+</head>
+<body data-page="cagnotte" class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold text-gray-800 no-underline">
+        🤲 <span>Ma Sadaqa</span>
+      </a>
+      <nav class="flex items-center gap-4 text-sm">
+        <a href="/" class="text-gray-600 hover:text-green-600 transition font-medium">← Retour</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenu -->
+  <main class="flex-1" id="cagnotte-content">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+
+      <!-- Image de couverture -->
+      <img id="cagnotte-image" src="" alt="" class="cover-image mb-8">
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Colonne principale -->
+        <div class="lg:col-span-2">
+          <h1 id="cagnotte-title" class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6"></h1>
+
+          <!-- Barre de progression -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+            <div class="flex justify-between items-end mb-3">
+              <div>
+                <span id="cagnotte-collected" class="text-2xl font-bold text-green-600"></span>
+                <span id="cagnotte-goal" class="text-gray-500 text-sm ml-1"></span>
+              </div>
+              <span id="cagnotte-percent" class="text-lg font-bold text-green-600"></span>
+            </div>
+            <div class="progress-bar mb-3">
+              <div id="cagnotte-progress-fill" class="progress-fill"></div>
+            </div>
+            <div class="flex justify-between text-sm text-gray-500">
+              <span id="cagnotte-donors"></span>
+            </div>
+          </div>
+
+          <!-- Bouton contribuer (mobile) -->
+          <div class="lg:hidden mb-6">
+            <a id="btn-contribuer" href="#" class="btn-primary w-full text-center block text-lg">
+              🤲 Je donne ma sadaqa
+            </a>
+          </div>
+
+          <!-- Histoire -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">L'histoire</h2>
+            <div id="cagnotte-story" class="text-gray-600 leading-relaxed"></div>
+          </div>
+
+          <!-- Derniers dons -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Derniers dons</h2>
+            <div id="dons-list"></div>
+          </div>
+        </div>
+
+        <!-- Sidebar (desktop) -->
+        <div class="hidden lg:block">
+          <div class="sticky top-24 space-y-4">
+            <a id="btn-contribuer-desktop" href="#" class="btn-primary w-full text-center block text-lg"
+               onclick="this.href = document.getElementById('btn-contribuer').href">
+              🤲 Je donne ma sadaqa
+            </a>
+
+            <!-- Trust badges sidebar -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm">
+              <div class="space-y-3 text-sm text-gray-600">
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">🔒</span>
+                  <span>Paiement 100% sécurisé</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">✅</span>
+                  <span>Données protégées</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">🛡️</span>
+                  <span>Connexion SSL chiffrée</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">⚡</span>
+                  <span>Don traité instantanément</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Trust badges mobile -->
+  <div class="trust-badges py-6 px-4 lg:hidden">
+    <span class="trust-badge">🔒 Paiement sécurisé</span>
+    <span class="trust-badge">✅ Données protégées</span>
+    <span class="trust-badge">🛡️ SSL</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="border-t border-gray-700 pt-4 text-center text-sm text-gray-500">
+        © 2024 Ma Sadaqa (masadaqa.com) — Paiement sécurisé par PayRam · <a href="#mentions">Mentions légales</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

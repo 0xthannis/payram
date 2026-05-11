@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BarakAllahou fik ! — Ma Sadaqa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤲</text></svg>">
+</head>
+<body data-page="confirmation" class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold text-gray-800 no-underline">
+        🤲 <span>Ma Sadaqa</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Contenu de confirmation -->
+  <main class="flex-1 flex items-center justify-center py-12 px-4" id="confirmation-content">
+    <div class="w-full max-w-md text-center">
+      <!-- Cercle check animé -->
+      <div class="confirmation-check">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">BarakAllahou fik ! 🤲</h1>
+      <p class="text-gray-600 mb-8">Qu’Allah accepte ta sadaqa et la multiplie.</p>
+
+      <!-- Récapitulatif -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 text-left">
+        <h2 class="font-semibold text-gray-800 mb-4 text-center">Récapitulatif de ta sadaqa</h2>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-500">Prénom</span>
+            <span id="conf-prenom" class="font-semibold text-gray-800"></span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-500">Montant</span>
+            <span id="conf-amount" class="font-bold text-green-600 text-lg"></span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-gray-100">
+            <span class="text-gray-500">Cagnotte</span>
+            <span id="conf-cagnotte" class="font-medium text-gray-800 text-right max-w-[200px]"></span>
+          </div>
+          <div class="flex justify-between items-center py-2">
+            <span class="text-gray-500">Statut</span>
+            <span id="conf-status"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton retour -->
+      <a id="conf-back-link" href="/" class="btn-primary inline-flex">
+        ← Retour à la cagnotte
+      </a>
+
+      <p class="text-sm text-gray-400 mt-6">
+        Tu recevras une confirmation dès que le paiement sera validé.<br>
+        Qu’Allah te récompense pour ta générosité. 🤲
+      </p>
+    </div>
+  </main>
+
+  <!-- Trust badges -->
+  <div class="trust-badges py-6 px-4">
+    <span class="trust-badge">🔒 Paiement sécurisé</span>
+    <span class="trust-badge">✅ Données protégées</span>
+    <span class="trust-badge">🛡️ SSL</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="border-t border-gray-700 pt-4 text-center text-sm text-gray-500">
+        © 2024 Ma Sadaqa (masadaqa.com) — Paiement sécurisé par PayRam · <a href="#mentions">Mentions légales</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
